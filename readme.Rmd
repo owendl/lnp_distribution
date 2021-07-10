@@ -1,0 +1,104 @@
+---
+title: "LNP Distribution"
+author: "Drew Owen"
+date: "7/10/2021"
+output: 
+  md_document: 
+    variant: gfm
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tabulizer)
+```
+
+```{r getting documents, echo=FALSE}
+dir.create("trialsite_docs", showWarnings = FALSE)
+
+download.file("https://trialsitenews.com/wp-content/uploads/2021/06/Ovaries-get-the-mRNA-from-Pfizer-Shot-Graph-1024x712.png",
+              "trialsite_docs/original_image.png", 
+              mode = "wb",
+              quiet = TRUE
+              )
+
+download.file("https://preview.redd.it/u5i5hctrcq471.png?width=910&format=png&auto=webp&s=73f89a0fed4755cdb1dd199b2d6dc60a7b5c4f20",
+              "trialsite_docs/revised_image.png", 
+              mode= "wb",
+              quiet = TRUE
+              )
+
+download.file("https://trialsitenews.com/wp-content/uploads/2021/06/Pfizer-report_Japanese-government.pdf",
+              "trialsite_docs/report.pdf", 
+              mode="wb",
+              quiet = TRUE
+              )
+```
+
+```{r extracting_table, echo=FALSE, warning=FALSE}
+
+table <- extract_tables("trialsite_docs/report.pdf",
+             output = "data.frame",
+             pages = c(16,17), 
+             # Found the areas using locate_areas("trialsite_docs/report.pdf",pages = c(16,17))
+             area = list(
+                       c(294.74247,  60.92308, 497.37793, 728.42809), 
+                       c(167.59866,  66.22074, 517.24415, 742.99666)
+                        ),
+             guess = FALSE
+             )
+
+tbl = rbind(table[[1]], table[[2]])
+columns = c("Tissue", "0.25h","1h","2h","4h","8h","24h","48h")
+
+conc_tbl <- tbl[,1:8] %>% drop_na()
+percent_tbl <- tbl[,c(1,9:15)] %>% drop_na()
+
+colnames(conc_tbl)<-columns
+colnames(percent_tbl)<-columns
+
+percent_tbl = percent_tbl %>%
+  mutate_at(vars(-Tissue), as.numeric,) %>%
+  drop_na()
+  
+```
+
+```{r wide_to_long, echo=FALSE}
+percent_long = percent_tbl %>%
+  pivot_longer(
+    cols = ends_with("h"),
+    names_to = "timepoint",
+    values_to = "percentage"
+  )
+
+conc_long = conc_tbl %>%
+  pivot_longer(
+    cols = ends_with("h"),
+    names_to = "timepoint",
+    values_to = "concentration"
+  )
+
+percent_long$timepoint <- factor(percent_long$timepoint, levels=c("0.25h", "1h", "2h", "4h", "8h", "24h", "48h"))
+conc_long$timepoint <- factor(conc_long$timepoint, levels=c("0.25h", "1h", "2h", "4h", "8h", "24h", "48h"))
+
+```
+
+```{r}
+g <- ggplot(conc_long, aes(timepoint, concentration, group = Tissue)) + geom_point(aes(color=Tissue)) + geom_line(aes(color = Tissue))
+g
+```
+
+```{r}
+g <- ggplot(subset(conc_long, concentration > 3), aes(timepoint, concentration, group = Tissue)) + geom_point(aes(color=Tissue)) + geom_line(aes(color = Tissue))
+g
+```
+
+```{r}
+g <- ggplot(subset(conc_long, concentration < 100 & concentration > 2), aes(timepoint, concentration, group = Tissue)) + geom_point(aes(color=Tissue)) + geom_line(aes(color = Tissue))
+g
+```
+
+```{r}
+g <- ggplot(percent_long, aes(timepoint, percentage, group = Tissue)) + geom_point(aes(color=Tissue)) + geom_line(aes(color = Tissue))
+g
+```
