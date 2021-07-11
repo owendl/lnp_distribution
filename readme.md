@@ -14,7 +14,8 @@ The quote below the caption of the image started with: “Biodistribution
 of lipid nanoparticles which carry the mRNA show that the ovaries get
 the highest concentration.” The author provided a
 [link](https://trialsitenews.com/wp-content/uploads/2021/06/Pfizer-report_Japanese-government.pdf)
-to the original report used to generate this plot.^{see footnote}
+to the original report used to generate this plot.<sup>see
+footnote</sup>
 
 Because I am me, I opened the pdf up to take a look. Most of the
 document was in Japanese with some organic molecule structures but near
